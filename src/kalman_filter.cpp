@@ -38,12 +38,35 @@ void KalmanFilter::Update(const VectorXd &z)
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) 
 	{
-		double rho = sqrt(x_(0)*x_(0) + x_(1)*x_(1));
-		double theta = atan(x_(1) / x_(0));
-		double rho_dot = (x_(0) * x_(2) + x_(1) * x_(3)) / rho;
-		VectorXd h = VectorXd(3); // h(x_)
+		float px, py, vx, vy;
+		px = x_(0);
+		py = x_(1);
+		vx = x_(2);
+		vy = x_(3);
+
+		float rho = sqrt(px*px + py*py);
+		float theta = atan2(py,px);
+		float rho_dot;
+		if (fabs(rho) > 0.0001) 
+		{
+			rho_dot = (px*vx + py*vy)/rho;
+  		} 
+		else 
+		{
+			rho_dot = 0;
+		}
+
+		VectorXd h = VectorXd(3); // h(x_) 
 		h << rho, theta, rho_dot;
 		VectorXd y = z - h;
+
+		//normalizing the angle
+  		theta = std::fmod(y(1) + M_PI, M_PI*2.0);
+  		if (theta < 0.0) 
+		{
+			theta += M_PI*2.0;
+		}
+		y(1) = theta - M_PI;
 
 		KF(y);
 		
